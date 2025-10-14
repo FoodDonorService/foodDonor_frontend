@@ -69,6 +69,12 @@ export const login = async (credentials: { username: string; password: string })
   return response.data
 }
 
+// 로그아웃 API
+export const logout = async () => {
+  const response = await apiClient.post<ApiResponse>("/users/logout")
+  return response.data
+}
+
 // Role에 따른 검색 조회 API (1.2.2)
 export const searchUsersByRole = async (role: string, query: string) => {
   const response = await apiClient.get<ApiResponse<{ list: any[] }>>(`/users/search`, {
@@ -182,9 +188,3 @@ export const getAcceptedMatches = async () => {
   return response.data
 }
 
-// 로그아웃 API (세션/쿠키 무효화 요청)
-export const logout = async () => {
-  // POST 요청을 보내 서버에게 현재 사용자의 세션/토큰을 무효화하도록 요청합니다.
-  const response = await apiClient.post<ApiResponse>("/users/logout")
-  return response.data
-}

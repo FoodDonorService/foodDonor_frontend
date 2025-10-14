@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Heart, LogOut, MapPin, Calendar, Package, RefreshCw } from "lucide-react"
 import { MatchRequestDialog } from "@/components/recipient/match-request-dialog"
 import { getDonationList } from "@/lib/api"
+import { logout } from "@/lib/api"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING: { label: "승인 대기", color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20" },
@@ -27,6 +29,7 @@ interface Donation {
 }
 
 export default function RecipientDashboard() {
+  const router = useRouter()
   const [donations, setDonations] = useState<Donation[]>([])
   const [myRequests, setMyRequests] = useState<any[]>([])
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null)
@@ -74,6 +77,19 @@ export default function RecipientDashboard() {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      const response = await logout()
+      if (response.status === "success") {
+        toast.success("로그아웃되었습니다")
+        router.push("/login")
+      }
+    } catch (error) {
+      console.error("[v0] Logout error:", error)
+      toast.error("로그아웃 중 오류가 발생했습니다")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -87,7 +103,7 @@ export default function RecipientDashboard() {
             </Badge>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               로그아웃
             </Button>

@@ -9,9 +9,12 @@ import { Heart, LogOut, Clock, CheckCircle2, XCircle, Package } from "lucide-rea
 import { MatchDetailDialog } from "@/components/foodbank/match-detail-dialog"
 import { MatchActionDialog } from "@/components/foodbank/match-action-dialog"
 import { getMatchList } from "@/lib/api"
+import { logout } from "@/lib/api"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export default function FoodBankDashboard() {
+  const router = useRouter()
   const [pendingMatches, setPendingMatches] = useState<any[]>([])
   const [acceptedMatches, setAcceptedMatches] = useState<any[]>([])
   const [rejectedMatches, setRejectedMatches] = useState<any[]>([])
@@ -51,6 +54,19 @@ export default function FoodBankDashboard() {
     setIsActionDialogOpen(true)
   }
 
+  const handleLogout = async () => {
+    try {
+      const response = await logout()
+      if (response.status === "success") {
+        toast.success("로그아웃되었습니다")
+        router.push("/login")
+      }
+    } catch (error) {
+      console.error("[v0] Logout error:", error)
+      toast.error("로그아웃 중 오류가 발생했습니다")
+    }
+  }
+
   const handleViewDetail = (match: any) => {
     setSelectedMatch(match)
     setIsDetailDialogOpen(true)
@@ -79,7 +95,7 @@ export default function FoodBankDashboard() {
             </Badge>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               로그아웃
             </Button>
