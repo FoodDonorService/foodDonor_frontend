@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Heart, Building2, Users, Warehouse, Search } from "lucide-react"
 import { signup, searchUsersByRole } from "@/lib/api"
+import { SearchResultDialog } from "@/components/ui/search-result-dialog"
 import { toast } from "sonner"
 
 type UserRole = "DONOR" | "RECIPIENT" | "FOOD_BANK"
@@ -31,6 +32,8 @@ export default function SignupPage() {
   })
   const [isSearching, setIsSearching] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false)
 
   const handleSearchInfo = async () => {
     if (!formData.name.trim()) {
@@ -43,16 +46,23 @@ export default function SignupPage() {
       const response = await searchUsersByRole(formData.role, formData.name)
 
       if (response.status === "success" && response.data.list.length > 0) {
-        const info = response.data.list[0]
-        setFormData({
-          ...formData,
-          id: info.id,
-          address: info.address,
-          latitude: info.latitude,
-          longitude: info.longitude,
-          phone_number: info.phone_number,
-        })
-        toast.success("정보를 불러왔습니다")
+        if (response.data.list.length === 1) {
+          // 결과가 1개면 바로 적용
+          const info = response.data.list[0]
+          setFormData({
+            ...formData,
+            id: info.id,
+            address: info.address,
+            latitude: info.latitude,
+            longitude: info.longitude,
+            phone_number: info.phone_number,
+          })
+          toast.success("정보를 불러왔습니다")
+        } else {
+          // 결과가 여러 개면 선택 팝업 표시
+          setSearchResults(response.data.list)
+          setIsSearchDialogOpen(true)
+        }
       } else {
         toast.error("해당 이름으로 정보를 찾을 수 없습니다")
       }
@@ -62,6 +72,18 @@ export default function SignupPage() {
     } finally {
       setIsSearching(false)
     }
+  }
+
+  const handleSelectSearchResult = (result: any) => {
+    setFormData({
+      ...formData,
+      id: result.id,
+      address: result.address,
+      latitude: result.latitude,
+      longitude: result.longitude,
+      phone_number: result.phone_number,
+    })
+    toast.success("정보를 불러왔습니다")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -260,6 +282,14 @@ export default function SignupPage() {
           </div>
         </CardContent>
       </Card>
+
+      <SearchResultDialog
+        open={isSearchDialogOpen}
+        onOpenChange={setIsSearchDialogOpen}
+        results={searchResults}
+        onSelect={handleSelectSearchResult}
+        role={formData.role}
+      />
     </div>
   )
 }
