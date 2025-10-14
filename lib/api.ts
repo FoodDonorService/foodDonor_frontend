@@ -1,7 +1,7 @@
 import axios from "axios"
 
 // API Base URL - 환경변수로 설정 가능
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://fooddonor.kro.kr:3000"
 
 // Axios 인스턴스 생성
 export const apiClient = axios.create({
@@ -12,8 +12,15 @@ export const apiClient = axios.create({
   timeout: 10000, // 10 seconds
 })
 
+// JWT 토큰을 헤더에 추가하는 인터셉터
 apiClient.interceptors.request.use(
   (config) => {
+    // localStorage에서 JWT 토큰 가져오기
+    const token = localStorage.getItem('jwt_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    
     console.log("[v0] API Request:", config.method?.toUpperCase(), config.url)
     return config
   },
@@ -65,13 +72,29 @@ export const signup = async (userData: {
 
 // 로그인 API
 export const login = async (credentials: { username: string; password: string }) => {
-  const response = await apiClient.post<ApiResponse>("/users/login", credentials)
+  const response = await apiClient.post<ApiResponse<{ token: string }>>("/users/login", credentials)
+  
+  // JWT 토큰을 localStorage에 저장
+  if (response.data.status === "success" && response.data.data?.token) {
+    localStorage.setItem('jwt_token', response.data.data.token)
+  }
+  
+  return response.data
+}
+
+// 사용자 프로필 조회 API
+export const getUserProfile = async () => {
+  const response = await apiClient.get<ApiResponse<{ role: string; username: string; name: string }>>("/users/me")
   return response.data
 }
 
 // 로그아웃 API
 export const logout = async () => {
   const response = await apiClient.post<ApiResponse>("/users/logout")
+  
+  // JWT 토큰을 localStorage에서 제거
+  localStorage.removeItem('jwt_token')
+  
   return response.data
 }
 

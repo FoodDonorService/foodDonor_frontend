@@ -1,0 +1,35 @@
+[
+  {
+    "AllowedHeaders": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS",
+      "PATCH",
+      "HEAD"
+    ],
+    "AllowedOrigins": [
+      "http://fooddonor.kro.kr",
+      "https://fooddonor.kro.kr",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ],
+    "ExposeHeaders": [
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Methods",
+      "Access-Control-Allow-Headers",
+      "Access-Control-Allow-Credentials",
+      "Access-Control-Max-Age",
+      "Content-Length",
+      "Content-Type",
+      "Date",
+      "Server",
+      "Transfer-Encoding"
+    ],
+    "MaxAgeSeconds": 86400
+  }
+]

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Heart } from "lucide-react"
-import { login } from "@/lib/api"
+import { login, getUserProfile } from "@/lib/api"
 import { toast } from "sonner"
 
 export default function LoginPage() {
@@ -32,15 +32,33 @@ export default function LoginPage() {
 
       if (response.status === "success") {
         toast.success("로그인되었습니다")
-        const role = response.data.role
-        if (role === "DONOR") 
-            router.push("/donor/dashboard")
-        else if (role === "RECIPIENT") 
-          router.push("/recipient/dashboard")
-        else if (role === "FOOD_BANK") 
-          router.push("/foodbank/dashboard")
-
-      
+        
+        // 로그인 성공 후 프로필 정보 조회
+        try {
+          const profileResponse = await getUserProfile()
+          if (profileResponse.status === "success") {
+            const role = profileResponse.data.role
+            if (role === "DONOR") {
+              router.push("/donor/dashboard")
+            } else if (role === "RECIPIENT") {
+              router.push("/recipient/dashboard")
+            } else if (role === "FOOD_BANK") {
+              router.push("/foodbank/dashboard")
+            } else {
+              console.warn("Unknown role:", role)
+              router.push("/")
+            }
+          } else {
+            toast.error("프로필 정보를 가져올 수 없습니다")
+            router.push("/")
+          }
+        } catch (profileError) {
+          console.error("Profile fetch error:", profileError)
+          toast.error("프로필 정보를 가져올 수 없습니다")
+          router.push("/")
+        }
+      } else {
+        toast.error(response.message || "로그인에 실패했습니다")
       }
     } catch (error) {
       console.error("[v0] Login error:", error)

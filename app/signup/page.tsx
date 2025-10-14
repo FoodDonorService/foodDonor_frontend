@@ -52,6 +52,7 @@ export default function SignupPage() {
           setFormData({
             ...formData,
             id: info.id,
+            name: info.name, // 검색 결과의 name을 그대로 사용
             address: info.address,
             latitude: info.latitude,
             longitude: info.longitude,
@@ -78,6 +79,7 @@ export default function SignupPage() {
     setFormData({
       ...formData,
       id: result.id,
+      name: result.name, // 검색 결과의 name을 그대로 사용
       address: result.address,
       latitude: result.latitude,
       longitude: result.longitude,

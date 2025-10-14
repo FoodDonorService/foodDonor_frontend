@@ -34,7 +34,7 @@ export function MatchActionDialog({ match, actionType, open, onOpenChange, onSuc
       if (actionType === "accept") {
         response = await acceptMatch(match.match_id)
       } else {
-        response = await rejectMatch(match.match_id, message)
+        response = await rejectMatch(match.match_id)
       }
 
       if (response.status === "success") {
