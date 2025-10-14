@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Heart, LogOut, Clock, CheckCircle2, XCircle, Package } from "lucide-react"
-import { MatchDetailDialog } from "@/components/foodbank/match-detail-dialog"
 import { MatchActionDialog } from "@/components/foodbank/match-action-dialog"
-import { getMatchList } from "@/lib/api"
+import { getMatchList, getAcceptedMatches } from "@/lib/api"
 import { logout } from "@/lib/api"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -19,7 +18,6 @@ export default function FoodBankDashboard() {
   const [acceptedMatches, setAcceptedMatches] = useState<any[]>([])
   const [rejectedMatches, setRejectedMatches] = useState<any[]>([])
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<"accept" | "reject">("accept")
   const [isLoading, setIsLoading] = useState(true)
@@ -31,13 +29,28 @@ export default function FoodBankDashboard() {
   const fetchMatches = async () => {
     setIsLoading(true)
     try {
+      // 대기 중인 매치와 거절된 매치는 기존 API 사용
       const response = await getMatchList()
       
       if (response.status === "success") {
         const matches = response.data.match_list
         setPendingMatches(matches.filter((m: any) => m.status === "PENDING"))
-        setAcceptedMatches(matches.filter((m: any) => m.status === "ACCEPTED"))
         setRejectedMatches(matches.filter((m: any) => m.status === "REJECTED"))
+      }
+
+      // 승인 완료된 매치는 별도 API 사용
+      try {
+        const acceptedResponse = await getAcceptedMatches()
+        if (acceptedResponse.status === "success") {
+          setAcceptedMatches(acceptedResponse.data.list)
+        }
+      } catch (acceptedError) {
+        console.error("[v0] Fetch accepted matches error:", acceptedError)
+        // 승인 완료 API 실패 시 기존 방식으로 폴백
+        if (response.status === "success") {
+          const matches = response.data.match_list
+          setAcceptedMatches(matches.filter((m: any) => m.status === "ACCEPTED"))
+        }
       }
 
     } catch (error) {
@@ -65,11 +78,6 @@ export default function FoodBankDashboard() {
       console.error("[v0] Logout error:", error)
       toast.error("로그아웃 중 오류가 발생했습니다")
     }
-  }
-
-  const handleViewDetail = (match: any) => {
-    setSelectedMatch(match)
-    setIsDetailDialogOpen(true)
   }
 
   const handleActionSuccess = () => {
@@ -195,9 +203,6 @@ export default function FoodBankDashboard() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Button onClick={() => handleViewDetail(match)} variant="outline" size="sm">
-                          상세보기
-                        </Button>
                         <Button
                           onClick={() => handleOpenActionDialog(match, "accept")}
                           size="sm"
@@ -271,9 +276,6 @@ export default function FoodBankDashboard() {
                           </div>
                         </div>
                       </div>
-                      <Button onClick={() => handleViewDetail(match)} variant="outline" size="sm">
-                        상세보기
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -344,17 +346,14 @@ export default function FoodBankDashboard() {
         </div>
       </div>
 
-      {selectedMatch && (
-        <>
-          <MatchDetailDialog match={selectedMatch} open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen} />
-          <MatchActionDialog
-            match={selectedMatch}
-            actionType={actionType}
-            open={isActionDialogOpen}
-            onOpenChange={setIsActionDialogOpen}
-            onSuccess={handleActionSuccess}
-          />
-        </>
+      {isActionDialogOpen && (
+        <MatchActionDialog
+          match={selectedMatch}
+          actionType={actionType}
+          open={isActionDialogOpen}
+          onOpenChange={setIsActionDialogOpen}
+          onSuccess={handleActionSuccess}
+        />
       )}
     </div>
   )
