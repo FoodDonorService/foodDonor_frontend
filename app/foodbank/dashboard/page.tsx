@@ -73,7 +73,7 @@ export default function FoodBankDashboard() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Heart className="h-6 w-6 text-primary fill-primary" />
-            <span className="text-xl font-bold">FoodShare</span>
+            <span className="text-xl font-bold">FoodDonor</span>
             <Badge variant="outline" className="ml-2 bg-chart-2/10 text-chart-2 border-chart-2/20">
               푸드뱅크
             </Badge>

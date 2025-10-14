@@ -11,7 +11,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Heart className="h-8 w-8 text-primary fill-primary" />
-            <span className="text-2xl font-bold text-foreground">FoodShare</span>
+            <span className="text-2xl font-bold text-foreground">FoodDonor</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/login">
@@ -56,8 +56,8 @@ export default function LandingPage() {
               <p className="text-muted-foreground mb-4">음식점에서 남은 음식을 기부하고 사회에 기여하세요</p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• 간편한 기부 등록</li>
-                <li>• 기부 내역 관리</li>
-                <li>• 투명한 기록</li>
+                <li>• 거리순 매칭 시스템</li>
+                <li>• 실시간 상태 확인</li>
               </ul>
             </CardContent>
           </Card>
@@ -97,7 +97,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t py-8 bg-card">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 FoodShare. 스마트시티 식품 기부 매칭 플랫폼</p>
+          <p>&copy; 2025 FoodDonor. 스마트시티 식품 기부 매칭 플랫폼</p>
         </div>
       </footer>
     </div>

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "FoodShare - 식품 기부 매칭 플랫폼",
+  title: "FoodDonor - 식품 기부 매칭 플랫폼",
   description: "기부자와 수혜처를 연결하는 스마트시티 어플리케이션",
     generator: 'v0.app'
 }

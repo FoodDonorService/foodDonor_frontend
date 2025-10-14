@@ -61,7 +61,7 @@ export default function LoginPage() {
           </div>
           <div className="text-center">
             <CardTitle className="text-2xl">로그인</CardTitle>
-            <CardDescription>FoodShare에 오신 것을 환영합니다</CardDescription>
+            <CardDescription>FoodDonor에 오신 것을 환영합니다</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

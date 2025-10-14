@@ -130,7 +130,7 @@ export default function SignupPage() {
           </div>
           <div className="text-center">
             <CardTitle className="text-2xl">회원가입</CardTitle>
-            <CardDescription>FoodShare와 함께 나눔을 시작하세요</CardDescription>
+            <CardDescription>FoodDonor와 함께 나눔을 시작하세요</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
