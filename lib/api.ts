@@ -137,6 +137,24 @@ export const getDonationList = async () => {
   return response.data
 }
 
+// 기부자 기부 목록 조회 API
+export const getDonorDonations = async () => {
+  const response = await apiClient.get<ApiResponse<{
+    list: Array<{
+      donation_id: number
+      restaurant_name: string
+      restaurant_address: string
+      item_name: string
+      category: string
+      quantity: number
+      expiration_date: string
+      status: string
+      created_at: string
+    }>
+  }>>("/donation/my")
+  return response.data
+}
+
 // 매치 요청 API
 export const requestMatch = async (donationId: number) => {
   const response = await apiClient.post<

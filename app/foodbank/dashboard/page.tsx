@@ -34,8 +34,16 @@ export default function FoodBankDashboard() {
       
       if (response.status === "success") {
         const matches = response.data.match_list
-        setPendingMatches(matches.filter((m: any) => m.status === "PENDING"))
-        setRejectedMatches(matches.filter((m: any) => m.status === "REJECTED"))
+        console.log("[v0] All matches from getMatchList:", matches)
+        
+        const pending = matches.filter((m: any) => m.status === "PENDING")
+        const rejected = matches.filter((m: any) => m.status === "REJECTED")
+        
+        console.log("[v0] Pending matches:", pending)
+        console.log("[v0] Rejected matches:", rejected)
+        
+        setPendingMatches(pending)
+        setRejectedMatches(rejected)
       }
 
       // 승인 완료된 매치는 별도 API 사용
@@ -80,8 +88,36 @@ export default function FoodBankDashboard() {
     }
   }
 
-  const handleActionSuccess = () => {
-    fetchMatches()
+  const handleActionSuccess = (actionType?: "accept" | "reject", matchId?: number) => {
+    console.log("[v0] Action success:", actionType, matchId)
+    
+    if (actionType === "reject" && matchId) {
+      // 거절된 매치를 pending에서 찾아서 rejected로 이동
+      setPendingMatches(prev => {
+        const rejectedMatch = prev.find(match => match.match_id === matchId)
+        if (rejectedMatch) {
+          console.log("[v0] Moving match to rejected:", rejectedMatch)
+          // 거절된 매치를 rejected 상태로 변경
+          const updatedMatch = { ...rejectedMatch, status: "REJECTED" }
+          setRejectedMatches(prevRejected => {
+            console.log("[v0] Adding to rejected list:", updatedMatch)
+            return [updatedMatch, ...prevRejected]
+          })
+          return prev.filter(match => match.match_id !== matchId)
+        }
+        console.log("[v0] Match not found in pending:", matchId)
+        return prev
+      })
+    } else if (actionType === "accept" && matchId) {
+      // 승인된 매치를 pending에서 제거
+      setPendingMatches(prev => prev.filter(match => match.match_id !== matchId))
+    }
+    
+    // 데이터 새로고침 (백엔드에서 최신 상태 확인)
+    setTimeout(() => {
+      console.log("[v0] Refreshing data after action")
+      fetchMatches()
+    }, 500)
   }
 
   const stats = {

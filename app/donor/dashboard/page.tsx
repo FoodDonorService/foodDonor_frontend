@@ -35,28 +35,7 @@ export default function DonorDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    fetchDonations()
-  }, [])
 
-  const fetchDonations = async () => {
-    setIsLoading(true)
-    try {
-      // TODO: 실제 API 엔드포인트로 교체
-      // const response = await getDonorDonations()
-      // if (response.status === "success") {
-      //   setDonations(response.data.list)
-      // }
-      
-      // 현재는 빈 배열로 시작 (실제 API 연동 시 교체)
-      setDonations([])
-    } catch (error) {
-      console.error("[v0] Fetch donations error:", error)
-      toast.error("기부 목록을 불러오는데 실패했습니다")
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleDonationCreated = (donationData: any) => {
     setDonations(prev => [donationData, ...prev])

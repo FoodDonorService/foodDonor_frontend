@@ -46,7 +46,22 @@ export function MatchActionDialog({ match, actionType, open, onOpenChange, onSuc
       }
 
       if (response.status === "success") {
-        toast.success(actionType === "accept" ? "매칭이 승인되었습니다" : "매칭이 거절되었습니다")
+        // message를 확인해서 실제 성공인지 거절인지 판단
+        let actualActionType = actionType
+        
+        if (response.message === "매치 실패.") {
+          // 거절 성공
+          actualActionType = "reject"
+          toast.success("매칭이 거절되었습니다")
+        } else if (response.message === "매치 수락이 정상 처리.") {
+          // 승인 성공
+          actualActionType = "accept"
+          toast.success("매칭이 승인되었습니다")
+        } else {
+          // 기타 성공 메시지
+          toast.success(actionType === "accept" ? "매칭이 승인되었습니다" : "매칭이 거절되었습니다")
+        }
+        
         onOpenChange(false)
         if (onSuccess) {
           onSuccess()
