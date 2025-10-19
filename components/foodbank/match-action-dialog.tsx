@@ -18,7 +18,7 @@ interface MatchActionDialogProps {
   actionType: "accept" | "reject"
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  onSuccess?: (actionType: "accept" | "reject", matchId: number) => void
 }
 
 export function MatchActionDialog({ match, actionType, open, onOpenChange, onSuccess }: MatchActionDialogProps) {
@@ -64,7 +64,7 @@ export function MatchActionDialog({ match, actionType, open, onOpenChange, onSuc
         
         onOpenChange(false)
         if (onSuccess) {
-          onSuccess()
+          onSuccess(actualActionType, match.match_id)
         }
       } else {
         toast.error(response.message || "처리 중 오류가 발생했습니다")

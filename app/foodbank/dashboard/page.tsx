@@ -43,7 +43,14 @@ export default function FoodBankDashboard() {
         console.log("[v0] Rejected matches:", rejected)
         
         setPendingMatches(pending)
-        setRejectedMatches(rejected)
+        // 거절된 매치를 기존 목록과 합치기 (중복 제거)
+        setRejectedMatches(prevRejected => {
+          const combined = [...prevRejected, ...rejected.filter(newRejected => 
+            !prevRejected.some(existing => existing.match_id === newRejected.match_id)
+          )]
+          console.log("[v0] Combined rejected matches:", combined)
+          return combined
+        })
       }
 
       // 승인 완료된 매치는 별도 API 사용
@@ -88,10 +95,10 @@ export default function FoodBankDashboard() {
     }
   }
 
-  const handleActionSuccess = (actionType?: "accept" | "reject", matchId?: number) => {
+  const handleActionSuccess = (actionType: "accept" | "reject", matchId: number) => {
     console.log("[v0] Action success:", actionType, matchId)
     
-    if (actionType === "reject" && matchId) {
+    if (actionType === "reject") {
       // 거절된 매치를 pending에서 찾아서 rejected로 이동
       setPendingMatches(prev => {
         const rejectedMatch = prev.find(match => match.match_id === matchId)
@@ -108,7 +115,7 @@ export default function FoodBankDashboard() {
         console.log("[v0] Match not found in pending:", matchId)
         return prev
       })
-    } else if (actionType === "accept" && matchId) {
+    } else if (actionType === "accept") {
       // 승인된 매치를 pending에서 제거
       setPendingMatches(prev => prev.filter(match => match.match_id !== matchId))
     }
