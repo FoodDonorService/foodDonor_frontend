@@ -3,67 +3,24 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Heart } from "lucide-react"
-import { login, getUserProfile } from "@/lib/api"
+import { userManager } from "@/lib/auth"
 import { toast } from "sonner"
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoginRedirect = async (e: React.MouseEvent) => {
     e.preventDefault()
-
     setIsSubmitting(true)
-    try {
-      const response = await login({
-        username: formData.username,
-        password: formData.password,
-      })
 
-      if (response.status === "success") {
-        toast.success("로그인되었습니다")
-        
-        // 로그인 성공 후 프로필 정보 조회
-        try {
-          const profileResponse = await getUserProfile()
-          if (profileResponse.status === "success") {
-            const role = profileResponse.data.role
-            if (role === "DONOR") {
-              router.push("/donor/dashboard")
-            } else if (role === "RECIPIENT") {
-              router.push("/recipient/dashboard")
-            } else if (role === "FOOD_BANK") {
-              router.push("/foodbank/dashboard")
-            } else {
-              console.warn("Unknown role:", role)
-              router.push("/")
-            }
-          } else {
-            toast.error("프로필 정보를 가져올 수 없습니다")
-            router.push("/")
-          }
-        } catch (profileError) {
-          console.error("Profile fetch error:", profileError)
-          toast.error("프로필 정보를 가져올 수 없습니다")
-          router.push("/")
-        }
-      } else {
-        toast.error(response.message || "로그인에 실패했습니다")
-      }
+    try {
+      await userManager.signinRedirect()
     } catch (error) {
-      console.error("[v0] Login error:", error)
-      toast.error("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요")
-    } finally {
+      console.error("Login redirect error:", error)
+      toast.error("로그인 페이지로 이동하는 중 오류가 발생했습니다")
       setIsSubmitting(false)
     }
   }
@@ -71,6 +28,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
       <Card className="w-full max-w-md">
+
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -82,34 +40,20 @@ export default function LoginPage() {
             <CardDescription>FoodDonor에 오신 것을 환영합니다</CardDescription>
           </div>
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">이메일</Label>
-              <Input
-                id="username"
-                type="email"
-                placeholder="user@example.com"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "로그인 중..." : "로그인"}
+          {/* 로그인 버튼 */}
+          <div className="space-y-4">
+            <Button 
+              onClick={handleLoginRedirect}
+              className="w-full" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "이동 중..." : "FoodDonor 계정으로 로그인"}
             </Button>
-          </form>
+          </div>
+
+          {/* 회원가입 버튼 */}
           <div className="mt-4 text-center text-sm">
             <span className="text-muted-foreground">계정이 없으신가요? </span>
             <Link href="/signup" className="text-primary hover:underline">
@@ -117,6 +61,7 @@ export default function LoginPage() {
             </Link>
           </div>
         </CardContent>
+        
       </Card>
     </div>
   )
