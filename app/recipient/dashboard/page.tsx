@@ -1,15 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Heart, LogOut, MapPin, Calendar, Package, RefreshCw } from "lucide-react"
 import { MatchRequestDialog } from "@/components/recipient/match-request-dialog"
 import { getDonationList } from "@/lib/api"
-import { logout } from "@/lib/api"
+import { signOut } from "@/lib/auth" // 👈 Amplify 로그아웃
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING: { label: "승인 대기", color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20" },
@@ -31,7 +31,7 @@ interface Donation {
 export default function RecipientDashboard() {
   const router = useRouter()
   const [donations, setDonations] = useState<Donation[]>([])
-  const [myRequests, setMyRequests] = useState<any[]>([])
+  const [myRequests, setMyRequests] = useState<any[]>([]) // 내 요청 목록 (일단 로컬 상태로 관리)
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -42,16 +42,12 @@ export default function RecipientDashboard() {
       const response = await getDonationList()
 
       if (response.status === "success") {
-        setDonations(response.data.list)
+        setDonations(response.data.donation_list || []) // 데이터 구조 맞춤 (donation_list)
         toast.success("기부 목록을 불러왔습니다")
       }
     } catch (error: any) {
-      console.error("[v0] Load donations error:", error)
-      if (error.message === "Network Error") {
-        toast.error("서버에 연결할 수 없습니다. API 서버가 실행 중인지 확인해주세요.")
-      } else {
-        toast.error(error.response?.data?.message || "기부 목록을 불러오는데 실패했습니다")
-      }
+      console.error("Load donations error:", error)
+      toast.error("기부 목록을 불러오는데 실패했습니다")
     } finally {
       setIsLoading(false)
     }
@@ -71,21 +67,19 @@ export default function RecipientDashboard() {
         item_name: selectedDonation.item_name,
         quantity: selectedDonation.quantity,
         status: "PENDING",
+        created_at: new Date().toISOString().split('T')[0]
       }
-      
       setMyRequests(prev => [newMatch, ...prev])
     }
   }
 
   const handleLogout = async () => {
     try {
-      const response = await logout()
-      if (response.status === "success") {
-        toast.success("로그아웃되었습니다")
-        router.push("/login")
-      }
+      await signOut()
+      toast.success("로그아웃되었습니다")
+      router.push("/login")
     } catch (error) {
-      console.error("[v0] Logout error:", error)
+      console.error("Logout error:", error)
       toast.error("로그아웃 중 오류가 발생했습니다")
     }
   }
@@ -113,30 +107,32 @@ export default function RecipientDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         {/* My Requests Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">내 매칭 요청</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {myRequests.map((request) => (
-              <Card key={request.match_id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold">{request.item_name}</h3>
-                      <p className="text-sm text-muted-foreground">{request.restaurant_name}</p>
+        {myRequests.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">내 매칭 요청</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {myRequests.map((request) => (
+                <Card key={request.match_id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold">{request.item_name}</h3>
+                        <p className="text-sm text-muted-foreground">{request.restaurant_name}</p>
+                      </div>
+                      <Badge variant="outline" className={statusConfig[request.status].color}>
+                        {statusConfig[request.status].label}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className={statusConfig[request.status].color}>
-                      {statusConfig[request.status].label}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>수량: {request.quantity}개</span>
-                    <span>요청일: {request.created_at}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>수량: {request.quantity}개</span>
+                      <span>요청일: {request.created_at}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Available Donations Section */}
         <div>
@@ -172,6 +168,7 @@ export default function RecipientDashboard() {
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <MapPin className="h-3 w-3" />
                               <span>{donation.restaurant_address}</span>
+                              {/* 거리 정보는 백엔드에서 안 주면 표시 안 함 */}
                               {donation.distance && (
                                 <span className="ml-2 font-medium text-primary">{donation.distance}</span>
                               )}
