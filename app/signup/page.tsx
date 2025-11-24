@@ -11,11 +11,13 @@ export default function SignupPage() {
         
         {/* 헤더 영역 */}
         <div className="text-center space-y-2">
-          <div className="flex justify-center mb-6">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Heart className="h-8 w-8 text-primary fill-primary" />
+          <Link href="/" className="cursor-pointer block">
+            <div className="flex justify-center mb-6">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Heart className="h-8 w-8 text-primary fill-primary" />
+              </div>
             </div>
-          </div>
+          </Link>
           <h1 className="text-3xl font-bold tracking-tight">환영합니다!</h1>
           <p className="text-muted-foreground text-lg">
             FoodDonor와 함께하기 위해 가입 유형을 선택해주세요
