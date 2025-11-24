@@ -16,4 +16,12 @@ const authConfig = {
 Amplify.configure(authConfig)
 
 // 편의를 위해 Auth 함수들 export
-export { getCurrentUser, signIn, signUp, signOut, fetchAuthSession } from "aws-amplify/auth"
+export { 
+  getCurrentUser, 
+  signIn, 
+  signUp, 
+  signOut, 
+  fetchAuthSession,
+  confirmSignUp,
+  resendSignUpCode
+} from "aws-amplify/auth"

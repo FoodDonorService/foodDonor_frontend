@@ -120,6 +120,41 @@ export const searchUsersByRole = async (role: string, query: string) => {
 
 // 9. 내 정보 조회 (로그인 직후 사용)
 export const getUserProfile = async () => {
-  const response = await apiClient.get<ApiResponse>("/users/me")
+  // 스펙: { status, message, data: { id, email, name, role } }
+  const response = await apiClient.get<ApiResponse<{
+    id: string
+    email: string
+    name: string
+    role: string
+  }>>("/users/me")
+  return response.data
+}
+
+// [FoodBank] 10. 전체 매칭 목록 조회 (대기/거절 등)
+export const getMatchList = async () => {
+  // 엔드포인트는 백엔드 상황에 맞춰 수정 필요 (일단 가상의 경로)
+  const response = await apiClient.get<ApiResponse>("/foodbank/matches") 
+  return response.data
+}
+
+// [FoodBank] 11. 승인된 매칭 목록 조회
+export const getAcceptedMatches = async () => {
+  const response = await apiClient.get<ApiResponse>("/foodbank/matches/accepted")
+  return response.data
+}
+
+// [FoodBank] 12. 매칭 승인/거절 처리
+export const updateMatchStatus = async (matchId: number, status: "ACCEPTED" | "REJECTED") => {
+  const response = await apiClient.post<ApiResponse>(`/foodbank/matches/${matchId}/status`, { status })
+  return response.data
+}
+
+// 13. 자원봉사자 프로필 생성 (회원가입 2단계 - Volunteer)
+export const createVolunteerProfile = async (profileData: { 
+  name: string; 
+  phone_number: string 
+}) => {
+  // POST /volunteer/profile
+  const response = await apiClient.post<ApiResponse>("/volunteer/profile", profileData)
   return response.data
 }
