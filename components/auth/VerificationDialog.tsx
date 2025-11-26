@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react" // 👈 useEffect 추가
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,16 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // 👇 [추가됨] 다이얼로그가 열릴 때마다 상태 초기화
+  useEffect(() => {
+    if (open) {
+      setCode("")
+      setError(null)
+      setStatus("initial")
+      setIsSubmitting(false)
+    }
+  }, [open])
+
   const handleVerify = async () => {
     if (code.length !== 6) {
       setError("인증 코드는 6자리 숫자입니다.")
@@ -32,22 +42,19 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
     setError(null)
 
     try {
-      // 1. Amplify의 confirmSignUp 함수 호출
       await confirmSignUp({
         username: email,
         confirmationCode: code,
       })
 
-      // 2. 성공 처리
-      onVerificationSuccess(email) // 성공했음을 상위 컴포넌트에 알림
-      onOpenChange(false) // 다이얼로그 닫기
+      onVerificationSuccess(email)
+      onOpenChange(false)
       toast.success("✅ 이메일 인증이 완료되었습니다.")
     } catch (err: any) {
       console.error("Verification Error:", err)
       if (err.name === "CodeMismatchException") {
         setError("인증 코드가 일치하지 않습니다. 다시 확인해주세요.")
       } else if (err.name === "NotAuthorizedException") {
-        // 이미 유효한 토큰이 있는 상태일 때 (재로그인 시도 필요)
         onVerificationSuccess(email)
       } else {
         setError(err.message || "인증 중 알 수 없는 오류가 발생했습니다.")
@@ -61,7 +68,6 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
     setStatus("resending")
     setError(null)
     try {
-      // 1. 코드 재전송
       await resendSignUpCode({ username: email })
       toast.info("📩 인증 코드를 다시 전송했습니다. 메일함을 확인해주세요.")
     } catch (err: any) {
@@ -87,7 +93,7 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
         
         <div className="flex flex-col items-center space-y-6 pt-4">
           
-          {/* OTP 입력 필드 */}
+          {/* OTP 입력 필드 (안전한 방식 적용됨) */}
           <InputOTP 
             maxLength={6} 
             value={code} 
@@ -95,14 +101,16 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
               setCode(value);
               setError(null);
             }}
-            render={({ slots }) => (
-              <InputOTPGroup>
-                {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} {...slot} index={index} className="w-12 h-12 text-xl" />
-                ))}
-              </InputOTPGroup>
-            )}
-          />
+          >
+            <InputOTPGroup className="justify-center w-full gap-2">
+              <InputOTPSlot index={0} className="w-12 h-12 text-xl border rounded-md" />
+              <InputOTPSlot index={1} className="w-12 h-12 text-xl border rounded-md" />
+              <InputOTPSlot index={2} className="w-12 h-12 text-xl border rounded-md" />
+              <InputOTPSlot index={3} className="w-12 h-12 text-xl border rounded-md" />
+              <InputOTPSlot index={4} className="w-12 h-12 text-xl border rounded-md" />
+              <InputOTPSlot index={5} className="w-12 h-12 text-xl border rounded-md" />
+            </InputOTPGroup>
+          </InputOTP>
           
           {/* 에러 메시지 */}
           {error && (
