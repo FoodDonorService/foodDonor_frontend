@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Users, ArrowLeft } from "lucide-react" // 아이콘 변경 (Users)
+import { Users, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { signUp, signIn } from "@/lib/auth"
+import { signUp, signIn, signOut } from "@/lib/auth"
 import { createRecipientProfile } from "@/lib/api"
+import { VerificationDialog } from "@/components/auth/VerificationDialog" // 👈 추가
 
 export default function RecipientSignupPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showVerification, setShowVerification] = useState(false) // 👈 추가
   
   const [formData, setFormData] = useState({
     email: "",
@@ -52,14 +54,39 @@ export default function RecipientSignupPage() {
         },
       })
 
-      // 2. [Cognito] 로그인
+      // 성공 시 인증 다이얼로그 열기
+      toast.info("인증 코드가 메일로 발송되었습니다.")
+      setShowVerification(true)
+
+    } catch (error: any) {
+      console.error("Signup Error:", error)
+      if (error.name === "UsernameExistsException") {
+        toast.error("이미 가입된 이메일입니다.")
+      } else {
+        toast.error(error.message || "회원가입 중 오류가 발생했습니다.")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // 2단계: 인증 성공 후 실행될 로직
+  const handleVerificationSuccess = async () => {
+    setIsSubmitting(true)
+    try {
+      try {
+        await signOut() 
+      } catch (e) {
+        // 로그아웃 에러는 무시 (로그인 안 된 상태일 수도 있으므로)
+      }
+
+      // [Cognito] 로그인
       await signIn({
         username: formData.email,
         password: formData.password,
       })
 
-      // 3. [Backend] 수혜자 프로필 생성 API 호출
-      // (위도/경도는 일단 서울시청 좌표로 하드코딩 - 추후 지도 API 연동 필요)
+      // [Backend] 수혜자 프로필 생성
       await createRecipientProfile({
         name: formData.name,
         phone_number: formData.phone_number,
@@ -73,15 +100,10 @@ export default function RecipientSignupPage() {
       toast.success("회원가입이 완료되었습니다!")
       router.push("/recipient/dashboard")
 
-    } catch (error: any) {
-      console.error("Recipient Signup Error:", error)
-      if (error.name === "UsernameExistsException") {
-        toast.error("이미 가입된 이메일입니다.")
-      } else if (error.name === "CodeDeliveryFailureException") {
-        toast.error("인증 코드를 보낼 수 없습니다. 이메일을 확인해주세요.")
-      } else {
-        toast.error(error.message || "회원가입 중 오류가 발생했습니다.")
-      }
+    } catch (error) {
+      console.error("Post-Verification Error:", error)
+      toast.error("인증은 성공했으나 로그인/프로필 생성 중 오류가 발생했습니다.")
+      router.push("/login")
     } finally {
       setIsSubmitting(false)
     }
@@ -89,7 +111,7 @@ export default function RecipientSignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
-      <Card className="w-full max-w-md my-8"> {/* my-8 추가해서 위아래 여백 확보 */}
+      <Card className="w-full max-w-md my-8">
         <CardHeader className="space-y-4">
           <Button 
             variant="ghost" 
@@ -210,11 +232,19 @@ export default function RecipientSignupPage() {
             </div>
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 mt-6" disabled={isSubmitting}>
-              {isSubmitting ? "가입 처리 중..." : "가입 완료"}
+              {isSubmitting ? "인증 코드 받기" : "가입하기"}
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      {/* 👈 인증 다이얼로그 연결 */}
+      <VerificationDialog 
+        open={showVerification} 
+        onOpenChange={setShowVerification}
+        email={formData.email}
+        onVerificationSuccess={handleVerificationSuccess}
+      />
     </div>
   )
 }
