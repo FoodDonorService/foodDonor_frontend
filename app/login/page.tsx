@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Heart } from "lucide-react"
-import { signIn } from "@/lib/auth" // 👈 Amplify의 로그인 함수
+import { signIn, signOut } from "@/lib/auth" // 👈 Amplify의 로그인 함수
 import { getUserProfile } from "@/lib/api" // 👈 역할 확인용 API
 import { toast } from "sonner"
 
@@ -30,6 +30,12 @@ export default function LoginPage() {
     setIsSubmitting(true)
 
     try {
+      try {
+        await signOut()
+      } catch (err) {
+        // 로그아웃 에러는 무시 (로그인 안 된 상태일 수도 있으므로)
+      }
+
       // 1. [Cognito] 로그인 시도
       const { isSignedIn } = await signIn({
         username: formData.email,
@@ -58,10 +64,15 @@ export default function LoginPage() {
             }
           }
         } catch (profileError) {
+          // console.error("Profile fetch error:", profileError)
+          // toast.error("프로필 정보를 불러오지 못했습니다.")
+          // router.push("/")
+
+          // todo : 아직 users/me 요청에 대해 CORS 설정이 안되어 있어서 에러가 나므로 일단 임시로 대시보드 갈 수 있도록 처리함
           console.error("Profile fetch error:", profileError)
-          // 프로필 조회 실패 시, 일단 메인으로 이동하거나 에러 표시
-          toast.error("프로필 정보를 불러오지 못했습니다.")
-          router.push("/")
+          // 👇 [임시 수정] 에러 나도 일단 기부자 대시보드로 보내버리기 (테스트용)
+          toast.warning("프로필 조회 실패 (CORS). 임시로 이동합니다.")
+          router.push("/donor/dashboard")
         }
       }
     } catch (error: any) {
