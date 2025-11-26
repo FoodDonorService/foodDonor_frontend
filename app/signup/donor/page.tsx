@@ -76,7 +76,7 @@ export default function DonorSignupPage() {
       } catch (e) {
         // 로그아웃 에러는 무시 (로그인 안 된 상태일 수도 있으므로)
       }
-      
+
       // [Cognito] 로그인
       await signIn({
         username: formData.email,
@@ -105,7 +105,7 @@ export default function DonorSignupPage() {
         <CardHeader className="space-y-4">
           <Button 
             variant="ghost" 
-            className="w-fit p-0 hover:bg-transparent hover:text-foreground" 
+            className="w-fit hover:bg-transparent hover:text-orange-600 cursor-pointer" 
             onClick={() => router.back()}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -173,14 +173,14 @@ export default function DonorSignupPage() {
               </p>
             </div>
 
-            <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 cursor-pointer" disabled={isSubmitting}>
               {isSubmitting ? "인증 코드 받기" : "가입하기"}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* 👈 인증 다이얼로그 연결 */}
+      {/* 인증 다이얼로그 */}
       <VerificationDialog 
         open={showVerification} 
         onOpenChange={setShowVerification}

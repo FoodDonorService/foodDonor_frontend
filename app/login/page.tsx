@@ -93,11 +93,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
-          <div className="flex justify-center">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Heart className="h-6 w-6 text-primary fill-primary" />
+          <Link href="/" className="cursor-pointer block">
+            <div className="flex justify-center">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Heart className="h-6 w-6 text-primary fill-primary" />
+              </div>
             </div>
-          </div>
+          </Link>
           <div className="text-center">
             <CardTitle className="text-2xl">로그인</CardTitle>
             <CardDescription>FoodDonor에 오신 것을 환영합니다</CardDescription>

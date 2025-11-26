@@ -117,7 +117,7 @@ export default function RecipientSignupPage() {
         <CardHeader className="space-y-4">
           <Button 
             variant="ghost" 
-            className="w-fit p-0 hover:bg-transparent hover:text-foreground" 
+            className="w-fit hover:bg-transparent hover:text-blue-600 cursor-pointer" 
             onClick={() => router.back()}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -213,7 +213,7 @@ export default function RecipientSignupPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 mt-6" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 mt-6 cursor-pointer" disabled={isSubmitting}>
               {isSubmitting ? "인증 코드 받기" : "가입하기"}
             </Button>
           </form>

@@ -126,7 +126,7 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
             variant="link" 
             onClick={handleResend}
             disabled={status === "resending" || isSubmitting}
-            className="text-sm text-muted-foreground"
+            className="text-sm text-muted-foreground cursor-pointer"
           >
             {status === "resending" ? (
               <>
@@ -141,7 +141,7 @@ export function VerificationDialog({ open, onOpenChange, email, onVerificationSu
           {/* 확인 버튼 */}
           <Button 
             onClick={handleVerify} 
-            className="w-full"
+            className="w-full cursor-pointer"
             disabled={isSubmitting || code.length !== 6}
           >
             {isSubmitting ? (

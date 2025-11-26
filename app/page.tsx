@@ -50,7 +50,7 @@ export default function LandingPage() {
         <section className="container mx-auto px-4 py-20">
           <h2 className="text-3xl font-bold text-center mb-12">누구를 위한 서비스인가요?</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-2 hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer">
+            <Card className="border-2 hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg">
               <CardContent className="pt-6">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <Building2 className="h-6 w-6 text-primary" />
@@ -65,7 +65,7 @@ export default function LandingPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer">
+            <Card className="border-2 hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg">
               <CardContent className="pt-6">
                 <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
                   <Users className="h-6 w-6 text-accent" />
@@ -80,7 +80,7 @@ export default function LandingPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer">
+            <Card className="border-2 hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg">
               <CardContent className="pt-6">
                 <div className="h-12 w-12 rounded-lg bg-chart-2/10 flex items-center justify-center mb-4">
                   <Heart className="h-6 w-6 text-chart-2" />

@@ -106,7 +106,7 @@ export default function VolunteerSignupPage() {
         <CardHeader className="space-y-4">
           <Button 
             variant="ghost" 
-            className="w-fit p-0 hover:bg-transparent hover:text-foreground" 
+            className="w-fit hover:bg-transparent hover:text-green-600 cursor-pointer" 
             onClick={() => router.back()}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -182,14 +182,14 @@ export default function VolunteerSignupPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 cursor-pointer" disabled={isSubmitting}>
               {isSubmitting ? "인증 코드 받기" : "가입하기"}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* 👈 인증 다이얼로그 연결 */}
+      {/* 인증 다이얼로그 */}
       <VerificationDialog 
         open={showVerification} 
         onOpenChange={setShowVerification}
