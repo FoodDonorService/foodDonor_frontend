@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react" // 👈 useEffect 추가
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -34,8 +34,27 @@ export function DonationDialog({ open, onOpenChange, onSuccess }: DonationDialog
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // 1. 다이얼로그가 열릴 때마다 폼 초기화
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        category: "",
+        item_name: "",
+        quantity: 0,
+        expiration_date: "",
+      })
+      setIsSubmitting(false)
+    }
+  }, [open])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 2. 제출 전 수량 검증
+    if (formData.quantity <= 0) {
+      toast.error("수량은 1개 이상이어야 합니다")
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -49,13 +68,7 @@ export function DonationDialog({ open, onOpenChange, onSuccess }: DonationDialog
       if (response.status === "success") {
         toast.success("기부 품목이 등록되었습니다")
         onOpenChange(false)
-        // Reset form
-        setFormData({
-          category: "",
-          item_name: "",
-          quantity: 0,
-          expiration_date: "",
-        })
+        
         // Call success callback with donation data
         if (onSuccess) {
           onSuccess({
@@ -120,9 +133,15 @@ export function DonationDialog({ open, onOpenChange, onSuccess }: DonationDialog
               <Input
                 id="quantity"
                 type="number"
+                min="1" // 3. HTML 기본 검증
                 placeholder="예: 20"
                 value={formData.quantity === 0 ? "" : formData.quantity.toString()}
-                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) || 0 })}
+                onChange={(e) => {
+                  // 4. 음수 입력 방지 로직
+                  const val = Number(e.target.value)
+                  if (val < 0) return
+                  setFormData({ ...formData, quantity: val })
+                }}
                 required
               />
             </div>
