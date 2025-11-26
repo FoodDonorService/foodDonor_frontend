@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -9,35 +8,49 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Heart } from "lucide-react"
-import { login, getUserProfile } from "@/lib/api"
+import { signIn, signOut } from "@/lib/auth" // 👈 Amplify의 로그인 함수
+import { getUserProfile } from "@/lib/api" // 👈 역할 확인용 API
 import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({ ...prev, [id]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     setIsSubmitting(true)
+
     try {
-      const response = await login({
-        username: formData.username,
+      try {
+        await signOut()
+      } catch (err) {
+        // 로그아웃 에러는 무시 (로그인 안 된 상태일 수도 있으므로)
+      }
+
+      // 1. [Cognito] 로그인 시도
+      const { isSignedIn } = await signIn({
+        username: formData.email,
         password: formData.password,
       })
 
-      if (response.status === "success") {
+      if (isSignedIn) {
         toast.success("로그인되었습니다")
         
-        // 로그인 성공 후 프로필 정보 조회
+        // 2. [Backend] 사용자 역할(Role) 확인 및 대시보드 이동
         try {
           const profileResponse = await getUserProfile()
           if (profileResponse.status === "success") {
-            const role = profileResponse.data.role
+            const role = profileResponse.data.role // 백엔드 응답 구조에 따라 수정 필요할 수 있음
+            
             if (role === "DONOR") {
               router.push("/donor/dashboard")
             } else if (role === "RECIPIENT") {
@@ -45,24 +58,32 @@ export default function LoginPage() {
             } else if (role === "FOOD_BANK") {
               router.push("/foodbank/dashboard")
             } else {
-              console.warn("Unknown role:", role)
+              // 역할이 없거나 알 수 없는 경우 (신규 가입자 등)
+              // router.push("/onboarding") // 필요하다면 이쪽으로
               router.push("/")
             }
-          } else {
-            toast.error("프로필 정보를 가져올 수 없습니다")
-            router.push("/")
           }
         } catch (profileError) {
+          // console.error("Profile fetch error:", profileError)
+          // toast.error("프로필 정보를 불러오지 못했습니다.")
+          // router.push("/")
+
+          // todo : 아직 users/me 요청에 대해 CORS 설정이 안되어 있어서 에러가 나므로 일단 임시로 대시보드 갈 수 있도록 처리함
           console.error("Profile fetch error:", profileError)
-          toast.error("프로필 정보를 가져올 수 없습니다")
-          router.push("/")
+          // 👇 [임시 수정] 에러 나도 일단 기부자 대시보드로 보내버리기 (테스트용)
+          toast.warning("프로필 조회 실패 (CORS). 임시로 이동합니다.")
+          router.push("/donor/dashboard")
         }
-      } else {
-        toast.error(response.message || "로그인에 실패했습니다")
       }
-    } catch (error) {
-      console.error("[v0] Login error:", error)
-      toast.error("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요")
+    } catch (error: any) {
+      console.error("Login error:", error)
+      if (error.name === "NotAuthorizedException") {
+        toast.error("이메일 또는 비밀번호가 올바르지 않습니다.")
+      } else if (error.name === "UserNotConfirmedException") {
+        toast.error("이메일 인증이 완료되지 않았습니다.")
+      } else {
+        toast.error("로그인 중 오류가 발생했습니다.")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -72,11 +93,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
-          <div className="flex justify-center">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Heart className="h-6 w-6 text-primary fill-primary" />
+          <Link href="/" className="cursor-pointer block">
+            <div className="flex justify-center">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Heart className="h-6 w-6 text-primary fill-primary" />
+              </div>
             </div>
-          </div>
+          </Link>
           <div className="text-center">
             <CardTitle className="text-2xl">로그인</CardTitle>
             <CardDescription>FoodDonor에 오신 것을 환영합니다</CardDescription>
@@ -85,13 +108,13 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">이메일</Label>
+              <Label htmlFor="email">이메일</Label>
               <Input
-                id="username"
+                id="email"
                 type="email"
                 placeholder="user@example.com"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -102,7 +125,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={handleChange}
                 required
               />
             </div>

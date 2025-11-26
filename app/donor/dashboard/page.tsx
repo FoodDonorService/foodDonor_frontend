@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Heart, LogOut, AlertCircle } from "lucide-react"
 import { DonationDialog } from "@/components/donor/donation-dialog"
-import { logout } from "@/lib/api"
+import { getMyDonationList } from "@/lib/api" // 👈 API 함수 임포트
+import { signOut } from "@/lib/auth" // 👈 Amplify 로그아웃 임포트
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 
+// 상태별 배지 스타일
 const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING: { label: "승인 대기", color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20" },
   AVAILABLE: { label: "기부 가능", color: "bg-green-500/10 text-green-700 border-green-500/20" },
@@ -25,7 +27,7 @@ interface Donation {
   quantity: number
   expiration_date: string
   status: string
-  created_at: string
+  created_at?: string
   message?: string
 }
 
@@ -33,23 +35,39 @@ export default function DonorDashboard() {
   const router = useRouter()
   const [donations, setDonations] = useState<Donation[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-
-
-  const handleDonationCreated = (donationData: any) => {
-    setDonations(prev => [donationData, ...prev])
-  }
-
-  const handleLogout = async () => {
+  // 1. 내 기부 목록 불러오기
+  const loadDonations = async () => {
     try {
-      const response = await logout()
+      const response = await getMyDonationList()
       if (response.status === "success") {
-        toast.success("로그아웃되었습니다")
-        router.push("/login")
+        setDonations(response.data.donation_list || [])
       }
     } catch (error) {
-      console.error("[v0] Logout error:", error)
+      console.error("Load donations error:", error)
+      toast.error("기부 목록을 불러오지 못했습니다.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDonations()
+  }, [])
+
+  const handleDonationCreated = () => {
+    loadDonations() // 기부 등록 후 목록 새로고침
+  }
+
+  // 2. 로그아웃 처리 (Amplify)
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      toast.success("로그아웃되었습니다")
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout error:", error)
       toast.error("로그아웃 중 오류가 발생했습니다")
     }
   }
@@ -76,7 +94,6 @@ export default function DonorDashboard() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Actions */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">기부 관리</h1>
@@ -84,7 +101,6 @@ export default function DonorDashboard() {
           </div>
         </div>
 
-        {/* Donations List */}
         {isLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
@@ -97,15 +113,15 @@ export default function DonorDashboard() {
                 기부 등록
               </Button>
             </div>
-            {donations.map((donation) => (
-              <Card key={donation.donation_id} className="hover:shadow-md transition-shadow">
+            {donations.map((donation, index) => (
+              <Card key={donation.donation_id || index} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-semibold">{donation.item_name}</h3>
-                        <Badge variant="outline" className={statusConfig[donation.status].color}>
-                          {statusConfig[donation.status].label}
+                        <Badge variant="outline" className={statusConfig[donation.status]?.color}>
+                          {statusConfig[donation.status]?.label || donation.status}
                         </Badge>
                       </div>
                       <div className="grid md:grid-cols-4 gap-4 text-sm mb-3">
@@ -121,17 +137,13 @@ export default function DonorDashboard() {
                           <span className="text-muted-foreground">소비기한:</span>
                           <p className="font-medium">{donation.expiration_date}</p>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">등록일:</span>
-                          <p className="font-medium">{donation.created_at}</p>
-                        </div>
+                        {donation.created_at && (
+                          <div>
+                            <span className="text-muted-foreground">등록일:</span>
+                            <p className="font-medium">{donation.created_at}</p>
+                          </div>
+                        )}
                       </div>
-                      {donation.message && (
-                        <div className="mt-3 p-3 bg-muted/50 rounded-lg flex items-start gap-2">
-                          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-muted-foreground">{donation.message}</p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </CardContent>
