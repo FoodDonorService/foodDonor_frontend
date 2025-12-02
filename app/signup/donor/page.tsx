@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Building2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { signUp, signIn, signOut } from "@/lib/auth"
+import { signUp, signIn, signOut, fetchAuthSession } from "@/lib/auth"
 import { createDonorProfile } from "@/lib/api"
 import { VerificationDialog } from "@/components/auth/VerificationDialog" // 👈 추가
 
@@ -16,12 +16,12 @@ export default function DonorSignupPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showVerification, setShowVerification] = useState(false) // 👈 다이얼로그 표시 상태
-  
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
-    name: "", 
+    name: "",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +72,7 @@ export default function DonorSignupPage() {
     setIsSubmitting(true) // 로딩 다시 시작
     try {
       try {
-        await signOut() 
+        await signOut()
       } catch (e) {
         // 로그아웃 에러는 무시 (로그인 안 된 상태일 수도 있으므로)
       }
@@ -82,18 +82,33 @@ export default function DonorSignupPage() {
         username: formData.email,
         password: formData.password,
       })
+      console.log("로그인 성공")
 
       // [Backend] 기부자 프로필 생성
       await createDonorProfile({ name: formData.name })
+      console.log("프로필 생성 성공")
 
       toast.success("회원가입이 완료되었습니다!")
       router.push("/donor/dashboard")
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Post-Verification Error:", error)
-      toast.error("인증은 성공했으나 로그인/프로필 생성 중 오류가 발생했습니다.")
-      // (이 경우 사용자가 직접 로그인 페이지에서 로그인하면 해결됨)
-      router.push("/login")
+
+      // 이미 로그인된 사용자 예외 처리 추가
+      if (error.name === "UserAlreadyAuthenticatedException" || error.code === "UserAlreadyAuthenticatedException") {
+         try {
+            await createDonorProfile({ name: formData.name })
+            toast.success("회원가입이 완료되었습니다!")
+            router.push("/donor/dashboard")
+            return; 
+         } catch (profileError) {
+             console.error("Profile creation failed:", profileError)
+             toast.error("프로필 생성 중 오류가 발생했습니다.")
+         }
+      } else {
+        toast.error("인증은 성공했으나 로그인/프로필 생성 중 오류가 발생했습니다.")
+        router.push("/login")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -103,9 +118,9 @@ export default function DonorSignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
-          <Button 
-            variant="ghost" 
-            className="w-fit hover:bg-transparent hover:text-orange-600 cursor-pointer" 
+          <Button
+            variant="ghost"
+            className="w-fit hover:bg-transparent hover:text-orange-600 cursor-pointer"
             onClick={() => router.back()}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -134,7 +149,7 @@ export default function DonorSignupPage() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">비밀번호</Label>
               <Input
@@ -181,8 +196,8 @@ export default function DonorSignupPage() {
       </Card>
 
       {/* 인증 다이얼로그 */}
-      <VerificationDialog 
-        open={showVerification} 
+      <VerificationDialog
+        open={showVerification}
         onOpenChange={setShowVerification}
         email={formData.email}
         onVerificationSuccess={handleVerificationSuccess}

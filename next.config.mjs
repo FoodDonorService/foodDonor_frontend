@@ -16,41 +16,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://fooddonor.kro.kr:3000/:path*',
-      },
-    ]
-  },
-  // CORS 문제 해결을 위한 헤더 설정
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: 'http://fooddonor.kro.kr:3000',
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD',
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma, X-CSRF-Token',
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'true',
-          },
-          {
-            key: 'Access-Control-Max-Age',
-            value: '86400',
-          },
-          {
-            key: 'Access-Control-Expose-Headers',
-            value: 'Content-Length, Content-Type, Date, Server, Transfer-Encoding',
-          },
-        ],
+        destination: 'https://bb41l61a31.execute-api.ap-northeast-2.amazonaws.com/v0/:path*',
       },
     ]
   },

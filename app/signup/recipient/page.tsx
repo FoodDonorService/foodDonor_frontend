@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Users, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { signUp, signIn } from "@/lib/auth"
+import { signUp, signIn, signOut } from "@/lib/auth"
 import { createRecipientProfile } from "@/lib/api"
 import { VerificationDialog } from "@/components/auth/VerificationDialog"
 import { AddressSearchDialog } from "@/components/ui/address-search-dialog" // 👈 추가됨
@@ -79,8 +79,15 @@ export default function RecipientSignupPage() {
   }
 
   const handleVerificationSuccess = async () => {
+    console.log("인증 성공")
     setIsSubmitting(true)
     try {
+      try {
+        await signOut({ global: true }) // global 옵션 추가
+      } catch (e) {
+        // 이미 로그아웃 상태면 에러가 날 수 있으므로 무시
+      }
+      
       await signIn({
         username: formData.email,
         password: formData.password,
@@ -88,7 +95,6 @@ export default function RecipientSignupPage() {
 
       // [중요] 주소 합치기: 기본주소 + 상세주소
       const finalAddress = `${formData.address} ${detailAddress}`.trim()
-
       await createRecipientProfile({
         name: formData.name,
         phone_number: formData.phone_number,
@@ -102,10 +108,32 @@ export default function RecipientSignupPage() {
       toast.success("회원가입이 완료되었습니다!")
       router.push("/recipient/dashboard")
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Post-Verification Error:", error)
-      toast.error("인증은 성공했으나 로그인/프로필 생성 중 오류가 발생했습니다.")
-      router.push("/login")
+      if (error.name === "UserAlreadyAuthenticatedException" || error.code === "UserAlreadyAuthenticatedException") {
+         // 이미 로그인된 상태라면 바로 프로필 생성으로 넘어갑니다.
+         try {
+            const finalAddress = `${formData.address} ${detailAddress}`.trim()
+            await createRecipientProfile({
+                name: formData.name,
+                phone_number: formData.phone_number,
+                address: finalAddress,
+                post_number: formData.post_number,
+                notes: formData.notes,
+                latitude: 37.5665, 
+                longitude: 126.9780, 
+            })
+            toast.success("회원가입이 완료되었습니다!")
+            router.push("/recipient/dashboard")
+            return; // 함수 종료
+         } catch (profileError) {
+             console.error("Profile creation failed after login check:", profileError)
+             toast.error("프로필 생성 중 오류가 발생했습니다.")
+         }
+      } else {
+        toast.error("로그인/프로필 생성 중 오류가 발생했습니다.")
+        router.push("/login")
+      }
     } finally {
       setIsSubmitting(false)
     }

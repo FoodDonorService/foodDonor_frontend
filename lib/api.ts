@@ -2,7 +2,7 @@ import axios from "axios"
 import { fetchAuthSession } from "aws-amplify/auth" // Amplify 인증 함수 임포트
 
 // API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://fooddonor.kro.kr:3000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://bb41l61a31.execute-api.ap-northeast-2.amazonaws.com/v0"
 
 // Axios 인스턴스 생성
 export const apiClient = axios.create({
@@ -20,8 +20,9 @@ apiClient.interceptors.request.use(
       // Amplify를 통해 현재 세션 정보 가져오기
       const session = await fetchAuthSession()
       // 액세스 토큰 추출
-      const token = session.tokens?.accessToken?.toString()
-      
+      // const token = session.tokens?.accessToken?.toString()
+      const token = session.tokens?.idToken?.toString() // 👈 accessToken -> idToken 변경
+
       // 토큰이 있다면 헤더에 추가
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
@@ -29,7 +30,7 @@ apiClient.interceptors.request.use(
     } catch (error) {
       console.log("[API] 토큰 가져오기 실패 (비로그인 상태일 수 있음):", error)
     }
-    
+
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },
@@ -126,14 +127,14 @@ export const getUserProfile = async () => {
     email: string
     name: string
     role: string
-  }>>("/users/me")
+  }>>("/user/me")
   return response.data
 }
 
 // [FoodBank] 10. 전체 매칭 목록 조회 (대기/거절 등)
 export const getMatchList = async () => {
   // 엔드포인트는 백엔드 상황에 맞춰 수정 필요 (일단 가상의 경로)
-  const response = await apiClient.get<ApiResponse>("/foodbank/matches") 
+  const response = await apiClient.get<ApiResponse>("/foodbank/matches")
   return response.data
 }
 
@@ -150,11 +151,60 @@ export const updateMatchStatus = async (matchId: number, status: "ACCEPTED" | "R
 }
 
 // 13. 자원봉사자 프로필 생성 (회원가입 2단계 - Volunteer)
-export const createVolunteerProfile = async (profileData: { 
-  name: string; 
-  phone_number: string 
+export const createVolunteerProfile = async (profileData: {
+  name: string;
+  phone_number: string
 }) => {
   // POST /volunteer/profile
   const response = await apiClient.post<ApiResponse>("/volunteer/profile", profileData)
+  return response.data
+}
+
+// lib/api.ts 하단에 추가
+
+// ---------------------------------------------------------
+// 🚴 자원봉사자 (Volunteer) 관련 API
+// ---------------------------------------------------------
+
+// [Volunteer] 1. 봉사 가능한 기부 목록 조회 (대기 중인 기부)
+export const getVolunteerDonationList = async () => {
+  const response = await apiClient.get<ApiResponse>("/donor/donationList")
+  return response.data
+}
+
+// [Volunteer] 2. 매칭 작업 요청 (봉사 시작 -> Task 생성)
+export const requestVolunteerTask = async (donationId: number) => {
+  const response = await apiClient.post<ApiResponse<{ task_id: string }>>("/donor/tasks", { donation_id: donationId })
+  return response.data
+}
+
+// [Volunteer] 3. 매칭 결과(AI 추천 수혜자) 조회 (Polling용)
+export const getMatchTaskResult = async (taskId: string) => {
+  const response = await apiClient.get<ApiResponse>(`/recipient/tasks/${taskId}`)
+  return response.data
+}
+
+// [Volunteer] 4. 수혜자 최종 선택 (매칭 확정)
+export const acceptRecipientMatch = async (taskId: string, recipientId: string) => {
+  // API 명세에 따라 URL 파라미터나 Body 확인 필요 (여기선 보고서 1.2.13 기준)
+  const response = await apiClient.post<ApiResponse>(`/recipient/accept/${taskId}`, {
+    recipient_id: recipientId
+  })
+  return response.data
+}
+
+// [Volunteer] 5. 봉사(배달) 완료 처리
+export const completeVolunteerTask = async (taskId: string) => {
+  // 보고서 1.2.14
+  const response = await apiClient.post<ApiResponse>(`/volunteer/tasks/${taskId}`, {
+    status: "COMPLETED"
+  })
+  return response.data
+}
+
+// [Volunteer] 6. 내 봉사 내역 조회
+export const getVolunteerHistory = async () => {
+  // 보고서 1.2.15
+  const response = await apiClient.get<ApiResponse>("/volunteer/tasks")
   return response.data
 }

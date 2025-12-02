@@ -9,20 +9,20 @@ import { Label } from "@/components/ui/label"
 import { User, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { signUp, signIn, signOut } from "@/lib/auth" 
-import { createVolunteerProfile } from "@/lib/api"
-import { VerificationDialog } from "@/components/auth/VerificationDialog" // 👈 추가
+import { createVolunteerProfile } from "@/lib/api" 
+import { VerificationDialog } from "@/components/auth/VerificationDialog"
 
 export default function VolunteerSignupPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showVerification, setShowVerification] = useState(false) // 👈 추가
+  const [showVerification, setShowVerification] = useState(false)
   
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
-    name: "", 
-    phone_number: "", 
+    name: "", // 봉사자 이름
+    phone_number: "", // 연락처
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,9 +56,11 @@ export default function VolunteerSignupPage() {
       setShowVerification(true)
 
     } catch (error: any) {
-      console.error("Signup Error:", error)
+      console.error("Volunteer Signup Error:", error)
       if (error.name === "UsernameExistsException") {
         toast.error("이미 가입된 이메일입니다.")
+      } else if (error.name === "CodeDeliveryFailureException") {
+        toast.error("인증 코드를 보낼 수 없습니다. 이메일을 확인해주세요.")
       } else {
         toast.error(error.message || "회원가입 중 오류가 발생했습니다.")
       }
@@ -67,34 +69,55 @@ export default function VolunteerSignupPage() {
     }
   }
 
-  // 2단계: 인증 성공 후
+  // 2단계: 인증 성공 후 실행될 로직
   const handleVerificationSuccess = async () => {
     setIsSubmitting(true)
     try {
+      // 1. 기존 세션 정리 (강제 로그아웃)
       try {
         await signOut() 
       } catch (e) {
-        // 로그아웃 에러는 무시 (로그인 안 된 상태일 수도 있으므로)
+        // ignore
       }
-      // [Cognito] 로그인
+
+      // 2. [Cognito] 로그인
       await signIn({
         username: formData.email,
         password: formData.password,
       })
 
-      // [Backend] 자원봉사자 프로필 생성
+      // 3. [Backend] 자원봉사자 프로필 생성 API 호출
       await createVolunteerProfile({ 
         name: formData.name,
         phone_number: formData.phone_number
       })
 
       toast.success("봉사자 회원가입이 완료되었습니다!")
+      
+      // 4. 자원봉사자 대시보드로 이동
       router.push("/volunteer/dashboard")
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Post-Verification Error:", error)
-      toast.error("인증은 성공했으나 로그인/프로필 생성 중 오류가 발생했습니다.")
-      router.push("/login")
+
+      // 이미 로그인된 사용자 예외 처리 추가
+      if (error.name === "UserAlreadyAuthenticatedException" || error.code === "UserAlreadyAuthenticatedException") {
+         try {
+            await createVolunteerProfile({ 
+              name: formData.name,
+              phone_number: formData.phone_number
+            })
+            toast.success("봉사자 회원가입이 완료되었습니다!")
+            router.push("/volunteer/dashboard")
+            return; 
+         } catch (profileError) {
+             console.error("Profile creation failed:", profileError)
+             toast.error("프로필 생성 중 오류가 발생했습니다.")
+         }
+      } else {
+        toast.error("인증은 성공했으나 로그인/프로필 생성 중 오류가 발생했습니다.")
+        router.push("/login")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -189,7 +212,7 @@ export default function VolunteerSignupPage() {
         </CardContent>
       </Card>
 
-      {/* 인증 다이얼로그 */}
+      {/* 인증 다이얼로그 연결 */}
       <VerificationDialog 
         open={showVerification} 
         onOpenChange={setShowVerification}
