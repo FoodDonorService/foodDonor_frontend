@@ -2,7 +2,7 @@ import axios from "axios"
 import { fetchAuthSession } from "aws-amplify/auth" // Amplify 인증 함수 임포트
 
 // API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://fooddonor.kro.kr:3000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://fooddonor.kro.kr:3000" // todo : 이거 뭐지ㅋ
 
 // Axios 인스턴스 생성
 export const apiClient = axios.create({
@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
       const session = await fetchAuthSession()
       // 액세스 토큰 추출
       const token = session.tokens?.accessToken?.toString()
-      
+
       // 토큰이 있다면 헤더에 추가
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
@@ -29,7 +29,7 @@ apiClient.interceptors.request.use(
     } catch (error) {
       console.log("[API] 토큰 가져오기 실패 (비로그인 상태일 수 있음):", error)
     }
-    
+
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },
@@ -126,14 +126,14 @@ export const getUserProfile = async () => {
     email: string
     name: string
     role: string
-  }>>("/users/me")
+  }>>("/user/me")
   return response.data
 }
 
 // [FoodBank] 10. 전체 매칭 목록 조회 (대기/거절 등)
 export const getMatchList = async () => {
   // 엔드포인트는 백엔드 상황에 맞춰 수정 필요 (일단 가상의 경로)
-  const response = await apiClient.get<ApiResponse>("/foodbank/matches") 
+  const response = await apiClient.get<ApiResponse>("/foodbank/matches")
   return response.data
 }
 
@@ -150,9 +150,9 @@ export const updateMatchStatus = async (matchId: number, status: "ACCEPTED" | "R
 }
 
 // 13. 자원봉사자 프로필 생성 (회원가입 2단계 - Volunteer)
-export const createVolunteerProfile = async (profileData: { 
-  name: string; 
-  phone_number: string 
+export const createVolunteerProfile = async (profileData: {
+  name: string;
+  phone_number: string
 }) => {
   // POST /volunteer/profile
   const response = await apiClient.post<ApiResponse>("/volunteer/profile", profileData)
