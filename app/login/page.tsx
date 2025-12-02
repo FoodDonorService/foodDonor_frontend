@@ -50,29 +50,33 @@ export default function LoginPage() {
           const profileResponse = await getUserProfile()
           if (profileResponse.status === "success") {
             const role = profileResponse.data.role // 백엔드 응답 구조에 따라 수정 필요할 수 있음
-            
-            if (role === "DONOR") {
+            console.log("역할 : ", role)
+            if (role === "donor") {
+              console.log("기부자 대쉬보드로 이동")
               router.push("/donor/dashboard")
-            } else if (role === "RECIPIENT") {
+            } else if (role === "recipient") {
+              console.log("수혜자 대쉬보드로 이동")
               router.push("/recipient/dashboard")
-            } else if (role === "FOOD_BANK") {
-              router.push("/foodbank/dashboard")
+            } else if (role === "volunteer") {
+              console.log("기부자 대쉬보드로 이동")
+              router.push("/volunteer/dashboard")
             } else {
               // 역할이 없거나 알 수 없는 경우 (신규 가입자 등)
               // router.push("/onboarding") // 필요하다면 이쪽으로
+              console.log("역할이 없거나 알 수 없어서 홈으로 이동")
               router.push("/")
             }
           }
         } catch (profileError) {
-          // console.error("Profile fetch error:", profileError)
-          // toast.error("프로필 정보를 불러오지 못했습니다.")
-          // router.push("/")
+          console.error("Profile fetch error:", profileError)
+          toast.error("프로필 정보를 불러오지 못했습니다.")
+          router.push("/")
 
           // todo : 아직 users/me 요청에 대해 CORS 설정이 안되어 있어서 에러가 나므로 일단 임시로 대시보드 갈 수 있도록 처리함
-          console.error("Profile fetch error:", profileError)
+          //console.error("Profile fetch error:", profileError)
           // 👇 [임시 수정] 에러 나도 일단 기부자 대시보드로 보내버리기 (테스트용)
-          toast.warning("프로필 조회 실패 (CORS). 임시로 이동합니다.")
-          router.push("/donor/dashboard")
+          //toast.warning("프로필 조회 실패 (CORS). 임시로 이동합니다.")
+          //router.push("/donor/dashboard")
         }
       }
     } catch (error: any) {
